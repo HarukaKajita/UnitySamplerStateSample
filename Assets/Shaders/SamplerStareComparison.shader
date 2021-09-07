@@ -51,11 +51,13 @@
 
             fixed4 frag (v2f i) : SV_Target{
                 // sample the texture
-                fixed4 col = _MainTex.Sample(linearmirror, i.uv);
-                //fixed4 col = _MainTex.Sample(_tex1, i.uv);//何故かエラーになる
-                //fixed4 scrollCol = UNITY_SAMPLE_TEX2D_SAMPLER(_MainTex, _tex1, (i.uv));//何故かエラーになる
-                fixed4 scrollCol = _tex1.Sample(linearmirror, (i.uv+_Time.x));//これは大丈夫
-                return scrollCol;
+                // サンプリングした値を最終出力に貢献するようにしないとマクロで宣言されたはずの
+                // SamplerStateがコンパイル時の最適化で削除されてコンパイルエラーになるので注意。
+                fixed4 c0 = _MainTex.Sample(linearmirror, i.uv);
+                fixed4 c1 = UNITY_SAMPLE_TEX2D_SAMPLER(_MainTex, _tex1, (i.uv));//何故かエラーになる
+                fixed4 c2 = _tex1.Sample(linearmirror, (i.uv+_Time.x));//これは大丈夫
+                fixed4 c3 = _MainTex.Sample(sampler_tex1, i.uv);//これは大丈夫
+                return c0 + c1 + c2 + c3;
             }
             ENDCG
         }
