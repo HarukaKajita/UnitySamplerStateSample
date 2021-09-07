@@ -1,8 +1,7 @@
-﻿Shader "Unlit/SamplerStareComparison"
-{
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" {}
+﻿Shader "Unlit/SamplerStareComparison"{
+    Properties{
+        _MainTex ("Main Texture (No Sampler)", 2D) = "white" {}
+        _tex1 ("Texture1 (has Sampler)", 2D) = "white" {}
     }
     SubShader {
         Pass {
@@ -29,6 +28,7 @@
             //SamplerStateの宣言とテクスチャの宣言とサンプリング時に使うのSamplerStateの指定を明示的にする記述もある。
             //それが
             //SamplerState サンプラーステートの変数名;
+            //UNITY_DECLARE_TEX2D(テクスチャ変数名);//この記述だと再利用可能なサンプラーステートとテクスチャを同時に宣言できるっぽい
             //UNITY_DECLARE_TEX2D_NOSAMPLER(テクスチャ変数名);//この記述でテクスチャを宣言した場合はSamplerStateを持たないテクスチャを宣言できるので、上限数を圧迫しない。
             //UNITY_SAMPLE_TEX2D_SAMPLER(テクスチャ変数名, サンプラーを持つテクスチャ変数名, uv);
             //テクスチャ変数名.Sampler(サンプラーステートの変数名, uv)
@@ -37,9 +37,10 @@
             //SamplerStateの変数名にpoint/liner/trilinear,clamp/repeat/mirror/mirroronceの文字列があれば、
             //それに対応したならSamplerStateとして機能してくれるっぽい。（大文字小文字は区別しない）（他にもUとVで個別のWrapModeを指定するとかもできる）
             SamplerState linearmirror;
+            UNITY_DECLARE_TEX2D(_tex1);
             UNITY_DECLARE_TEX2D_NOSAMPLER(_MainTex);
             float4 _MainTex_ST;
-
+            
             v2f vert (float4 vertex : POSITION, float2 uv : TEXCOORD0){
                 v2f o;
                 o.vertex = UnityObjectToClipPos(vertex);
@@ -51,7 +52,10 @@
             fixed4 frag (v2f i) : SV_Target{
                 // sample the texture
                 fixed4 col = _MainTex.Sample(linearmirror, i.uv);
-                return col;
+                //fixed4 col = _MainTex.Sample(_tex1, i.uv);//何故かエラーになる
+                //fixed4 scrollCol = UNITY_SAMPLE_TEX2D_SAMPLER(_MainTex, _tex1, (i.uv));//何故かエラーになる
+                fixed4 scrollCol = _tex1.Sample(linearmirror, (i.uv+_Time.x));//これは大丈夫
+                return scrollCol;
             }
             ENDCG
         }
